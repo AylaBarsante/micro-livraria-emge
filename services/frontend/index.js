@@ -52,7 +52,48 @@ function calculateShipping(id, cep) {
         });
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+function verifyQuantity(id, i) {
+
+    fetch('http://localhost:3000/product/' + id)
+        .then((data) => {
+            if (data.ok) {
+                return data.json();
+            }
+            throw data.statusText;
+        })
+        .then((data) => {
+            if (data.quantity > 0) {
+                $(".button-buy")[i].removeAttribute("disabled", "");
+            } else {
+                $(".button-buy")[i].setAttribute("disabled", "");
+            }
+        })
+        .catch((err) => {
+            swal('Erro', 'Erro ao listar os produtos', 'error');
+            console.error(err);
+        });
+
+}
+
+function updateStock(id) {
+    fetch('http://localhost:3000/product/' + id + '/buy')
+        .then((data) => {
+            if (data.ok) {
+                return data.json();
+            }
+            throw data.statusText;
+        })
+        .then(() => {
+            swal('Compra de livro', 'Sua compra foi realizada com sucesso', 'success')
+                .then(() => {
+                    location.reload();
+                });
+        })
+        .catch((err) => {
+            swal('Erro', 'Ocorreu um erro ao prosseguir com a compra: ' + err, 'error');
+        })
+}
+document.addEventListener('DOMContentLoaded', function() {
     const books = document.querySelector('.books');
 
     fetch('http://localhost:3000/products')
@@ -67,6 +108,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 data.forEach((book) => {
                     books.appendChild(newBook(book));
                 });
+                for (i = 0; i < data.length; i++) {
+                    verifyQuantity(data[i]["id"], i)
+                }
+
+                for (i = 0; i < data.length; i++) {
+                    verifyQuantity(data[i]["id"], i)
+                }
 
                 document.querySelectorAll('.button-shipping').forEach((btn) => {
                     btn.addEventListener('click', (e) => {
@@ -79,6 +127,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('.button-buy').forEach((btn) => {
                     btn.addEventListener('click', (e) => {
                         swal('Compra de livro', 'Sua compra foi realizada com sucesso', 'success');
+                        const idProduct = e.target.getAttribute('data-id');
+
+                        console.log(idProduct);
+                        updateStock(idProduct);
                     });
                 });
             }
